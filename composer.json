@@ -1,0 +1,32 @@
+{
+  "name": "lisd-example/backend",
+  "description": "LISD backend example",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Kevin Schroeder",
+      "email": "kschroeder@magiumlib.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Lisd\\": "src"
+    }
+  },
+  "require": {
+    "zendframework/zend-di": "^2.6",
+    "zendframework/zend-http": "^2.7",
+    "psr/http-message": "^1.0",
+    "zendframework/zend-diactoros": "^1.6",
+    "mongodb/mongodb": "^1.2",
+    "monolog/monolog": "^1",
+    "litipk/php-jiffy": "^1.4.0",
+    "zendframework/zend-router": "^3.0",
+    "zendframework/zend-psr7bridge": "^1.0",
+    "zendframework/zend-code": "^3.2",
+    "zendframework/zend-validator": "^2.10",
+    "magium/mcm-aws-factory": "^0.9.4",
+    "magium/mcm-pusher-factory": "^1.0"
+  }
+}
