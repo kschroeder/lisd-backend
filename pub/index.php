@@ -5,7 +5,7 @@ $di = include __DIR__ . '/../etc/bootstrap.php';
 include __DIR__ . '/../etc/http.php';
 
 $di->instanceManager()->setTypePreference(
-    \Clairvoyant\Controller\Auth\AuthorizationInterface::class,
-    [\Clairvoyant\Controller\Auth\Session::class]
+    \Lisd\Controller\Auth\AuthorizationInterface::class,
+    [\Lisd\Controller\Auth\Session::class]
 );
-$di->get(\Clairvoyant\Controller\FrontController::class)->dispatch();
+$di->get(\Lisd\Controller\FrontController::class)->dispatch();

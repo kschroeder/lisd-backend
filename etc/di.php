@@ -4,7 +4,7 @@ return [
     'instance' => [
         \MongoDB\Client::class => [
             'parameters' => [
-                'uri' => 'mongodb://database:27017'
+                'uri' => $_SERVER['MONGO_URI']
             ]
         ]
     ]
