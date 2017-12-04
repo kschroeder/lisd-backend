@@ -6,6 +6,7 @@ use Lisd\Controller\AbstractUnauthenticatedController;
 use Lisd\Controller\Auth\AuthorizationInterface;
 use Lisd\Repositories\Account\Account;
 use Lisd\Repositories\Account\AccountRepository;
+use Lisd\Repositories\Room\RoomRepository;
 use Lisd\View\View;
 use Magium\Auth0Factory\Auth0Factory;
 use Psr\Http\Message\RequestInterface;
@@ -22,7 +23,8 @@ class Index extends AbstractUnauthenticatedController
     public function __construct(
         Auth0Factory $factory,
         RequestInterface $request,
-        AccountRepository $repository
+        AccountRepository $repository,
+        RoomRepository $roomRepository
     )
     {
         $this->auth0 = $factory->factory();
@@ -48,9 +50,10 @@ class Index extends AbstractUnauthenticatedController
 
             $_SESSION['account'] = $account;
 
-            $redirect = new RedirectResponse('/');
+            $redirect = new RedirectResponse('/app');
             return $redirect;
         }
+        $this->auth0->login();
     }
 
 }

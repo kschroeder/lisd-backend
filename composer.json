@@ -28,6 +28,7 @@
     "zendframework/zend-validator": "^2.10",
     "magium/mcm-aws-factory": "^0.9.4",
     "magium/mcm-pusher-factory": "^1.0",
-    "magium/mcm-auth0-factory": "^1.0"
+    "magium/mcm-auth0-factory": "^1.1.1",
+    "zendframework/zend-inputfilter": "^2.7"
   }
 }

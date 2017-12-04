@@ -9,7 +9,6 @@ use Lisd\Controller\Controllers\Error\NotFound;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Di\Di;
-use Zend\Diactoros\Response\JsonResponse;
 use Zend\Diactoros\Response\SapiEmitter;
 use Zend\Http\Request;
 use Zend\Router\Http\TreeRouteStack;
@@ -21,18 +20,21 @@ class FrontController
     private $authorization;
     private $request;
     private $router;
+    private $context;
 
     public function __construct(
         Di $di,
         AuthorizationInterface $authorization,
         RequestInterface $request,
-        TreeRouteStack $router
+        TreeRouteStack $router,
+        Context $context
     )
     {
         $this->di = $di;
         $this->authorization = $authorization;
         $this->request = $request;
         $this->router = $router;
+        $this->context = $context;
     }
 
     public function setAuthorization(AuthorizationInterface $authorization)
@@ -51,9 +53,6 @@ class FrontController
         if ($match instanceof RouteMatch) {
             $controller = $match->getParam('controller');
             $action = $match->getParam('action');
-            $context = new Context();
-            $this->di->instanceManager()->addSharedInstance($context, Context::class);
-            // This is so stupid
             foreach ($match->getParams() as $key => $value) {
                 $context[$key] = $value;
             }
@@ -73,7 +72,7 @@ class FrontController
 
     public function formatControllerClass($controller, $action): string
     {
-        $result = 'Clairvoyant\Controller\Controllers\\' . $this->formatCase($controller) . '\\' . $this->formatCase($action);
+        $result = 'Lisd\Controller\Controllers\\' . $this->formatCase($controller) . '\\' . $this->formatCase($action);
         return $result;
     }
 
@@ -105,6 +104,8 @@ class FrontController
             }
 
         } catch (\Exception $e) {;
+            $this->context['message'] = $e->getMessage();
+            $this->context['originalController'] = $controllerInstance;
             $controllerInstance = $this->di->get(InternalServerError::class);
             /** @var $controllerInstance InternalServerError  */
             $response = $controllerInstance->execute();

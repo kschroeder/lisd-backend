@@ -7,6 +7,7 @@ use Lisd\Controller\Auth\AuthorizationInterface;
 use Lisd\View\View;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Zend\Diactoros\Response\RedirectResponse;
 
 class Index extends AbstractUnauthenticatedController
 {
@@ -24,7 +25,7 @@ class Index extends AbstractUnauthenticatedController
     public function execute(): ResponseInterface
     {
 
-        return (new View('index/index'))->getResponse();
+        return new RedirectResponse('/auth');
     }
 
 }

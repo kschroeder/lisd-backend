@@ -1,0 +1,7 @@
+<magiumConfiguration xmlns="http://www.magiumlib.com/Configuration">
+    <section identifier="process_queue">
+        <group identifier="sqs">
+            <element identifier="endpoint" />
+        </group>
+    </section>
+</magiumConfiguration>

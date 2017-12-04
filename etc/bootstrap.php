@@ -22,4 +22,6 @@ $config = $magiumConfigurationFactory->getConfiguration();
 $di->instanceManager()->addSharedInstance($config, get_class($config));
 $di->instanceManager()->addSharedInstance($config, \Magium\Configuration\Config\Repository\ConfigInterface::class);
 
+$di->instanceManager()->addSharedInstance(new \Lisd\Controller\Context(), \Lisd\Controller\Context::class);
+
 return $di;

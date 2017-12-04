@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lewisville ISD Social Media Project</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.9/vue.min.js"></script>
+    <style>
+        .navbar-collapse {
+            padding: 0;
+        }
+
+        /* forces the nav to take full container with */
+        .navbar-nav > li:first-child > a, .navbar-nav > li:last-child > a {
+            padding: 0;
+        }
+
+        .navbar-nav {
+            display: table;
+            width: 100%;
+            margin: 0;
+        }
+
+        .navbar-nav > li {
+            display: table-cell;
+            text-align: center;
+            float: none;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="navbar-collapse collapse"
+         style="background: rgb(30, 57, 110); url(/images/gb-gradient-bottom-black-large.png)">
+        <img src="/images/xrealinnovation.png" style="max-height: 150px; padding: 20px; ">
+    </div>
+</nav>
+<div class="container" id="app" style="margin-top: 200px">
+    <div id="messages" v-if="showMessages">
+        <h1>Messages</h1>
+    </div>
+    <div id="friends" v-if="showFriends">
+        <h1>Friends</h1>
+    </div>
+    <div id="notifications" v-if="showNotifications">
+        <h1>Notifications</h1>
+    </div>
+    <div id="profile" v-if="showProfile">
+        <h1>Profile</h1>
+    </div>
+    <nav class="navbar navbar-default navbar-fixed-bottom">
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li @click="toggleVisibility('Messages')">Messages</li>
+                <li @click="toggleVisibility('Friends')">Friends</li>
+                <li @click="toggleVisibility('Notifications')">Notifications</li>
+                <li @click="toggleVisibility('Profile')">Profile</li>
+            </ul>
+        </div>
+    </nav>
+</div>
+<script type="text/javascript">
+    new Vue({
+        el: '#app',
+        data: {
+            showMessages: true,
+            showFriends: false,
+            showNotifications: false,
+            showProfile: false,
+            messages: []
+        },
+        methods: {
+            toggleVisibility: function (which) {
+                this.showMessages = false;
+                this.showFriends = false;
+                this.showNotifications = false;
+                this.showProfile = false;
+                this['show' + which] = true;
+            }
+        }
+    })
+
+</script>
+</body>
+</html>

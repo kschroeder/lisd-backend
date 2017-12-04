@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<magiumBase xmlns="http://www.magiumlib.com/BaseConfiguration">
+    <persistenceConfiguration>
+        <driver>pdo_mysql</driver>
+        <database>lisd_configuration</database>
+        <username>root</username>
+        <password>Password1</password>
+        <hostname>database</hostname>
+    </persistenceConfiguration>
+    <contextConfigurationFile file="etc/contexts.xml" type="xml"/>
+    <configurationDirectories>
+        <directory>etc</directory>
+    </configurationDirectories>
+    <configurationFiles>
+        <file>settings.xml</file>
+    </configurationFiles>
+    <cache>
+        <adapter>filesystem</adapter>
+        <options>
+            <cache_dir>/tmp</cache_dir>
+        </options>
+    </cache>
+</magiumBase>
