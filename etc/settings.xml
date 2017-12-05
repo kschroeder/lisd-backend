@@ -4,4 +4,10 @@
             <element identifier="endpoint" />
         </group>
     </section>
+    <section identifier="marvel">
+        <group identifier="api">
+            <element identifier="key" />
+            <element identifier="secret" />
+        </group>
+    </section>
 </magiumConfiguration>

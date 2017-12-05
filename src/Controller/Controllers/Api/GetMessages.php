@@ -3,53 +3,98 @@
 namespace Lisd\Controller\Controllers\Api;
 
 use Lisd\Controller\AbstractController;
-use Lisd\Controller\Context;
-use Lisd\Controller\RequestToJson;
+use Lisd\Controller\Auth\AuthorizationInterface;
+use Lisd\Repositories\Account\Account;
+use Lisd\Repositories\Account\AccountRepository;
 use Lisd\Repositories\Message\MessageRepository;
-use Lisd\View\Responses\FailedApiResponse;
+use Lisd\Repositories\Room\Room;
+use Lisd\Repositories\Room\RoomRepository;
+use Lisd\Repositories\RoomSubscription\RoomSubscriptionRepository;
 use Lisd\View\Responses\SuccessfulApiResponse;
+use MongoDB\BSON\ObjectID;
 use Psr\Http\Message\ResponseInterface;
 
 class GetMessages extends AbstractController
 {
 
-    private $context;
     private $messageRepository;
-    private $getMessages;
+    private $roomRepository;
+    private $authorization;
+    private $roomSubscriptionRepository;
+    private $accountRepository;
+    private $accounts = [];
 
     public function __construct(
-        Context $context,
         MessageRepository $messageRepository,
-        \Lisd\Controller\Controllers\Api\InputFilter\GetMessages $getMessages
+        RoomRepository $roomRepository,
+        RoomSubscriptionRepository $roomSubscriptionRepository,
+        AccountRepository $accountRepository,
+        AuthorizationInterface $authorization
     )
     {
-        $this->context = $context;
         $this->messageRepository = $messageRepository;
-        $this->getMessages = $getMessages;
+        $this->roomRepository = $roomRepository;
+        $this->authorization = $authorization;
+        $this->accountRepository = $accountRepository;
+        $this->roomSubscriptionRepository = $roomSubscriptionRepository;
+    }
+
+    protected function getAccount(ObjectID $id)
+    {
+        $test = (string)$id;
+        if (!isset($this->accounts[$test])) {
+            $account = $this->accountRepository->loadById($id);
+            /** @var $account Account */
+            $this->accounts[$test] = [
+                'id' => (string)$account->getId(),
+                'family_name' => (string)$account->getFamilyName(),
+                'given_name' => (string)$account->getGivenName(),
+                'picture' => (string)$account->getPicture(),
+            ];
+        }
+        return $this->accounts[$test];
+    }
+
+    protected function getRoom(array $rooms, ObjectID $room)
+    {
+        foreach ($rooms as $roomItem) {
+            if ($roomItem instanceof Room) {
+                if ($roomItem->getId() == $room) {
+                    return [
+                        'id' => (string)$roomItem->getId(),
+                        'name' => $roomItem->getName()
+                    ];
+                }
+            }
+        }
+        return null;
     }
 
     public function execute(): ResponseInterface
     {
-        $this->getMessages->setData($this->context);
-        if ($this->getMessages->isValid()) {
-            $room = $this->getMessages->getRoom();
-            $messages = $this->messageRepository->loadByRoomAndCreatedAt(
-                $room,
-                $this->getMessages->getValue('since')
-            );
-            $results = [];
-            foreach ($messages as $message) {
-                $results[] = [
-                    'text' => $message->getText(),
-                    'room' => $message->getRoomId(),
-                    'created_at' => $message->getCreatedAt()->toDateTime()->getTimestamp()
-                ];
-            }
-            return (new SuccessfulApiResponse())->getResponse($results);
+        $subscriptions = $this->roomSubscriptionRepository->loadByAccount($this->authorization->getAccount());
+        $roomIds = [];
+        foreach ($subscriptions as $subscription) {
+            $roomIds[] = $subscription->getRoomId();
         }
-        return (new FailedApiResponse())->getResponse(
-            $this->getMessages->getMessages()
-        );
+        $rooms = $this->roomRepository->load([
+            '_id' => [
+                '$in' => $roomIds
+            ]
+        ])->toArray();
+
+        $messages = $this->messageRepository->loadByRooms($rooms);
+        $results = [];
+        foreach ($messages as $message) {
+            $results[] = [
+                'text' => $message->getText(),
+                'room' => $this->getRoom($rooms, $message->getRoomId()),
+                'account' => $this->getAccount($message->getAccountId()),
+                'created_at' => $message->getCreatedAt()->toDateTime()->getTimestamp()
+            ];
+        }
+        return (new SuccessfulApiResponse())->getResponse($results);
+
     }
 
 }

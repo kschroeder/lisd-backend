@@ -3,22 +3,14 @@
 namespace Lisd\Controller\Controllers\Api;
 
 use Lisd\Controller\AbstractController;
-use Lisd\Controller\AbstractUnauthenticatedController;
 use Lisd\Controller\Auth\AuthorizationInterface;
-use Lisd\Controller\Context;
-use Lisd\Controller\Controllers\Api\InputFilter\Message;
 use Lisd\Controller\RequestToJson;
-use Lisd\Processing\Manager\ProcessManager;
-use Lisd\Processing\Processor\FriendshipNotification;
-use Lisd\Processing\Processor\MessageNotifications;
 use Lisd\Repositories\Account\Account;
 use Lisd\Repositories\Account\AccountRepository;
-use Lisd\Repositories\Friendship\Friendship;
 use Lisd\Repositories\Friendship\FriendshipRepository;
-use Lisd\Repositories\Message\MessageRepository;
-use Lisd\Repositories\Room\RoomRepository;
 use Lisd\View\Responses\FailedApiResponse;
 use Lisd\View\Responses\SuccessfulApiResponse;
+use MongoDB\BSON\Regex;
 use Psr\Http\Message\ResponseInterface;
 
 class FindFriend extends AbstractController
@@ -51,9 +43,11 @@ class FindFriend extends AbstractController
         $accounts = $this->accountRepository->load([
             '$or' => [
                 [
-                    'family_name' => $query['search']
+                    'family_name' => new Regex('.*' . $query['search'] . '.*', 'i')
                 ], [
-                    'given_name' => $query['search']
+                    'given_name' => new Regex('.*' . $query['search'] . '.*', 'i')
+                ], [
+                    'description' => new Regex('.*' . $query['search'] . '.*', 'i')
                 ]
             ],
             '_id' => [
@@ -69,6 +63,7 @@ class FindFriend extends AbstractController
                 'given_name' => $account->getGivenName(),
                 'family_name' => $account->getFamilyName(),
                 'picture' => $account->getPicture(),
+                'description' => $account->getDescription(),
             ];
         }
 

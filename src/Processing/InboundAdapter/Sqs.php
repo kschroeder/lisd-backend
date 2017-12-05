@@ -33,20 +33,39 @@ class Sqs
             while (true) {
                 try {
                     $messages = $sqs->receiveMessage([
-                        'QueueUrl' => $this->config->getValue(self::SETTINGS_QUEUE)
+                        'QueueUrl' => $this->config->getValue(self::SETTINGS_QUEUE),
+                        'WaitTimeSeconds' => 20,
+                        'MaxNumberOfMessages' => 10
                     ]);
                     if ($messages) {
                         $allMessages = $messages->get('Messages');
+                        if (!$allMessages) {
+
+                            continue;
+                        }
                         foreach ($allMessages as $message) {
                             $body = $message['Body'];
                             if ($body) {
                                 $payload = json_decode($body, true);
                                 $this->processManager->execute($payload);
                             }
+                            $sqs->deleteMessage([
+                                'QueueUrl' =>  $this->config->getValue(self::SETTINGS_QUEUE),
+                                'ReceiptHandle' => $message['ReceiptHandle']
+                            ]);
                         }
                 }
                 } catch (\Exception $e) {
+                    if (isset($message)) {
+                        try {
+                            $sqs->deleteMessage([
+                                'QueueUrl' => $this->config->getValue(self::SETTINGS_QUEUE),
+                                'ReceiptHandle' => $message['ReceiptHandle']
+                            ]);
+                        } catch (\Exception $e1) {
 
+                        }
+                    }
                 }
             }
         }

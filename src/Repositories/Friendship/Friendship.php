@@ -21,4 +21,14 @@ class Friendship extends AbstractDocument
         return (array)$this['friendship'];
     }
 
+    public function setInitiator(Account $account)
+    {
+        $this['initiator'] = $account->getId();
+    }
+
+    public function getInitiatorId()
+    {
+        return $this['initiator'];
+    }
+
 }

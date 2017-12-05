@@ -8,9 +8,6 @@ use Lisd\Repositories\Account\Account;
 use Lisd\Repositories\Account\AccountRepository;
 use Lisd\Repositories\Friendship\Friendship;
 use Lisd\Repositories\Friendship\FriendshipRepository;
-use Lisd\Repositories\Message\Message;
-use Lisd\Repositories\Message\MessageRepository;
-use Lisd\Repositories\Room\RoomRepository;
 use Magium\ConfigurationManager\Pusher\PusherFactory;
 
 class FriendshipNotification implements ProcessorInterface
@@ -43,7 +40,26 @@ class FriendshipNotification implements ProcessorInterface
     {
         $friendship = $this->frienshipRepository->loadById($id);
         if ($friendship instanceof Friendship) {
+            $friends = $friendship->getFriendship();
+            $initiator = $friendship->getInitiatorId();
+            if ($initiator) {
+                $sendTo = array_diff($friends, [$initiator]);
+                $sendTo = array_shift($sendTo);
+                $account = $this->accountRepository->loadById($sendTo);
+                if ($account instanceof Account) {
 
+                    $payload = [
+                        'text' => 'We are now friends',
+                        'account' => [
+                            'id' => (string)$account->getId(),
+                            'given_name' => $account->getGivenName(),
+                            'family_name' => $account->getFamilyName(),
+                            'picture' => $account->getPicture(),
+                        ],
+                    ];
+                    $this->pusherFactory->factory()->trigger('notifications', (string)$account->getId(), $payload);
+                }
+            }
         }
     }
 

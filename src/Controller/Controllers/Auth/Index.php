@@ -3,11 +3,9 @@
 namespace Lisd\Controller\Controllers\Auth;
 
 use Lisd\Controller\AbstractUnauthenticatedController;
-use Lisd\Controller\Auth\AuthorizationInterface;
 use Lisd\Repositories\Account\Account;
 use Lisd\Repositories\Account\AccountRepository;
 use Lisd\Repositories\Room\RoomRepository;
-use Lisd\View\View;
 use Magium\Auth0Factory\Auth0Factory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -42,6 +40,9 @@ class Index extends AbstractUnauthenticatedController
             if (!$account) {
                 $account = new Account($result);
                 $result = $this->repository->save($account)->getInsertedId();
+                if (!$account->getPicture()) {
+                    $account->setPicture('/images/default-avatar.jpeg');
+                }
                 $account = $this->repository->loadById($result);
             }
             if (!session_id()) {
@@ -54,6 +55,7 @@ class Index extends AbstractUnauthenticatedController
             return $redirect;
         }
         $this->auth0->login();
+        return null;
     }
 
 }

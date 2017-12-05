@@ -5,14 +5,17 @@ namespace Lisd\Processing\Manager;
 use Aws\Sqs\SqsClient;
 use Lisd\Processing\Processor\ProcessorInterface;
 use Magium\AwsFactory\AwsFactory;
+use Magium\Configuration\Config\Repository\ConfigInterface;
 use Psr\Log\LoggerInterface;
 use Zend\Di\Di;
 
 class ProcessManager
 {
+    const CONFIG_ENDPOINT = 'process_queue/sqs/endpoint';
 
     private $logger;
     private $di;
+    private $config;
 
     /**
      * @var SqsClient
@@ -22,12 +25,14 @@ class ProcessManager
     public function __construct(
         LoggerInterface $logger,
         AwsFactory $awsFactory,
+        ConfigInterface $config,
         Di $di
     )
     {
         $this->logger = $logger;
         $this->di = $di;
-//        $this->sqs = $awsFactory->factory(SqsClient::class);
+        $this->sqs = $awsFactory->factory(SqsClient::class);
+        $this->config = $config;
     }
 
     public function execute(array $payload)
@@ -48,11 +53,12 @@ class ProcessManager
     {
         $payload = [
             'type' => get_class($processor),
-            'id' => $processor->getTarget()->getId()
+            'id' => (string)$processor->getTarget()->getId()
         ];
         $payload = json_encode($payload);
-        return;
+
         $this->sqs->sendMessage([
+            'QueueUrl' => $this->config->getValue(self::CONFIG_ENDPOINT),
             'MessageBody' => $payload
         ]);
     }

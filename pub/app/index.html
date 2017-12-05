@@ -8,6 +8,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.9/vue.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.17.1/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://js.pusher.com/4.1/pusher.min.js"></script>
     <style>
         .navbar-collapse {
             padding: 0;
@@ -33,6 +35,88 @@
         #profile-form .form-control {
             margin-bottom: 10px;
         }
+
+        #app img {
+            height: 50px;
+            width: 50px;
+            border-radius: 3px;
+            box-shadow: #403c3d 1px 1px 1px;
+            position: absolute;
+        }
+
+        .characterSelected {
+            background: rgb(30, 57, 110);
+        }
+
+        #app {
+            font-size: 1.3em;
+        }
+
+        nav li {
+            padding: 30px;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        .modal-mask {
+            position: fixed;
+            z-index: 9998;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, .5);
+            display: table;
+            transition: opacity .3s ease;
+        }
+
+        .modal-wrapper {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .modal-container {
+            width: 800px;
+            height: 700px;
+            margin: 0px auto;
+            padding: 20px 30px;
+            background-color: #fff;
+            border-radius: 2px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .33);
+            transition: all .3s ease;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+
+        .modal-header h3 {
+            margin-top: 0;
+            color: #42b983;
+        }
+
+        .modal-body {
+            margin: 20px 0;
+        }
+
+        .modal-default-button {
+            float: right;
+        }
+
+        .modal-enter {
+            opacity: 0;
+        }
+
+        .modal-leave-active {
+            opacity: 0;
+        }
+
+        .modal-enter .modal-container,
+        .modal-leave-active .modal-container {
+            -webkit-transform: scale(1.1);
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -42,69 +126,159 @@
         <img src="/images/xrealinnovation.png" style="max-height: 150px; padding: 20px; ">
     </div>
 </nav>
+<script type="text/x-template" id="modal-template">
+    <transition name="modal">
+        <div class="modal-mask">
+            <div class="modal-wrapper">
+                <div class="modal-container">
+                    <slot name="body">
+                        default body
+                    </slot>
+                </div>
+            </div>
+        </div>
+        </div>
+    </transition>
+</script>
+
 <div class="container" id="app" style="margin-top: 200px">
     <div id="messages" v-if="showMessages">
         <h1>Messages</h1>
         <form class="form form-inline" onsubmit="return false">
-            <select v-for="(room, index) in rooms" class="form-control input-lg" v-model="selectedRoom">
-                <option v-bind:value="room.id">{{room.name}}</option>
+            <select class="form-control input-lg" v-model="selectedRoom" style="max-width: 25%;">
+                <option v-for="(room, index) in rooms" v-bind:value="room.id">{{room.name}}</option>
             </select>
-            <input type="text" class="form-control input-lg" style="width: 60%; " placeholder="Type a message..." v-model:value="messageText">
+            <input type="text" class="form-control input-lg" style="min-width: 50%; " placeholder="Type a message..."
+                   v-model:value="messageText">
             <button class="btn btn-primary btn-lg" @click="pushMessage()">Send Message</button>
         </form>
+        <ul class="list-unstyled" v-for="(message, index) in messages">
+            <li class="alert alert-info">
+                <img v-bind:src="message.account.picture">
+                <div style="margin-left: 70px;">
+                    <strong>{{message.account.given_name}} {{message.account.family_name}}</strong> says in <strong>{{message.room.name}}</strong>
+                    <i class="fa fa-reply pull-right" aria-hidden="true" @click="selectedRoom=message.room.id"></i>
+                    <p>
+                        {{message.text}}
+                    </p>
+                </div>
+
+            </li>
+        </ul>
     </div>
     <div id="rooms" v-if="showRooms">
         <h1>Rooms</h1>
         <form class="form form-inline" onsubmit="return false">
-            <input type="text" name="new_room_name" v-model:value="new_room_name" class="form-control"
+            <input type="text" name="new_room_name" v-model:value="new_room_name" class="form-control input-lg"
+                   style="width: 50%;"
                    placeholder="Enter the name of the room...">
-            <button class="btn btn-primary" @click="findRoom()">Find and Join Room</button>
-            <button class="btn btn-default" @click="createRoom()">Create Room</button>
+            <button class="btn btn-primary btn-lg" @click="findRoom()">Find Room</button>
+            <button class="btn btn-default btn-lg" @click="createRoom()">Create Room</button>
         </form>
-        <ul style="list-unstyled" v-for="(room, index) in rooms">
-            <li>
+        <ul class="list-unstyled" v-for="(room, index) in rooms">
+            <li class="alert alert-info">
                 {{room.name}}
+                <i class="fa fa-plus pull-right" style="cursor: pointer" aria-hidden="true" v-if="room.can_subscribe"
+                   @click="subscribeToRoom(room.id)"></i>
             </li>
         </ul>
     </div>
     <div id="friends" v-if="showFriends">
         <h1>Friends</h1>
         <form onsubmit="return false" class="form form-inline">
-            <input type="text" name="find_friend" class="form-control" placeholder="Search for a friend..."
-                   v-model:value="searchTerms">
-            <button class="btn btn-primary" @click="searchFriends()">Search</button>
+            <input type="text" name="find_friend" class="form-control input-lg" placeholder="Search for a friend..."
+                   v-model:value="searchTerms" style="width: 50%;">
+            <button class="btn btn-primary btn-lg" @click="searchFriends()">Search</button>
         </form>
-        <ul style="list-unstyled" v-for="(friend, index) in friendSearch">
-            <li>
-                <img v-bind:src="friend.picture" style="width: 75px; height: 75px; ">
-                {{friend.given_name}}
-                {{friend.family_name}}
-                <i class="fa fa-plus" aria-hidden="true" v-if="friend.can_create_friendship"
-                   @click="createFriendship(friend.id)"></i>
+        <div class="alert alert-danger" v-show="friendSearch.length == 0">Nobody Found</div>
+        <ul class="list-unstyled">
+            <li v-for="(friend, index) in friendSearch" class="alert alert-info">
+                <img v-bind:src="friend.picture">
+                <div style="margin-left: 70px; ">
+                    <p>
+                        <strong>
+                            {{friend.given_name}}
+                            {{friend.family_name}}
+                        </strong>
+                        <i class="fa fa-plus pull-right" aria-hidden="true" v-if="friend.can_create_friendship"
+                           @click="createFriendship(friend.id)"></i>
+                    </p>
+                    <p>{{friend.description}}</p>
+                </div>
             </li>
         </ul>
     </div>
     <div id="notifications" v-if="showNotifications">
         <h1>Notifications</h1>
+        <p v-show="!notifications.length">
+            No notifications at this time
+        </p>
+        <ul class="list-unstyled">
+            <li v-for="(notification, index) in notifications" class="alert alert-warning row">
+                <img v-bind:src="notification.account.picture">
+                <div style="margin-left: 70px; ">
+                    {{notification.account.given_name}}
+                    {{notification.account.family_name}}
+                    :
+                    {{notification.text}}
+                </div>
+            </li>
+        </ul>
     </div>
     <div id="profile" v-if="showProfile">
         <h1>Profile</h1>
-        <img v-bind:src="account.picture"
-             style="width:200px; height:200px; border-radius: 5px; border: 1px solid #666666; box-shadow: #403c3d 2px 2px 3px"
-             class="pull-left">
-        <div class="pull-left" style="padding-left: 30px; " id="profile-form">
+        <div style="position: absolute; width:200px; ">
+            <img v-bind:src="account.picture"
+                 style="position: relative; width:200px; height:200px; border-radius: 5px; border: 1px solid #666666; box-shadow: #403c3d 2px 2px 3px"
+            >
+            <br>
+            <button class="btn btn-primary btn-lg" style="margin-top: 20px;width: 100%;"
+                    @click="choosePicture">Change Picture
+            </button>
+            <modal v-if="choosePictureShow" @close="choosePictureShow = false">
+                <div slot="body">
+                    <div>
+                        <form class="form form-inline" onsubmit="return false">
+                            <input class="form-control input-lg" placeholder="Search for Marvel Character"
+                                   style="width: 75%;" v-model="marvelSearchTerms">
+                            <button class="btn btn-primary btn-lg" @click="choosePicture">Search</button>
+                        </form>
+                    </div>
+                    <div>
+                        <div class="pull-left" style="width: 275px; height: 500px; ">
+                            <img v-bind:src="selectedImage" v-show="selectedImage" style="width: 275px; height: 275px; position: relative">
+                            <div style="margin-top: 20px;">
+                                <button class="btn btn-primary btn-lg" @click="savePicture"  v-show="selectedImage">
+                                    Select
+                                </button>
+                                <button class=" btn-lg btn btn-default" @click="choosePictureShow = false">
+                                    Cancel
+                                </button>
+                            </div>
+
+                        </div>
+                        <div v-for="(character, index) in characters"
+                             style="display: inline-block; width: 20%; vertical-align: top; text-align: center; " :class="{characterSelected: character.selected}">
+                            <div @click="selectedImage = character.image" >
+                                <img v-bind:src="character.image"
+                                     style="position: relative; width: 100px; height: 100px; cursor: pointer; ">
+                                <div>
+                                    {{character.name}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </modal>
+        </div>
+        <div style="margin-left: 250px; " id="profile-form">
             <input type="text" name="given_name" v-model:value="account.given_name" placeholder="First Name"
-                   class="form-control" @blur="updateProfile('given_name')">
+                   class="form-control input-lg" @blur="updateProfile('given_name')">
             <input type="text" name="given_name" v-model:value="account.family_name" placeholder="Family Name"
-                   class="form-control" @blur="updateProfile('family_name')">
-            <h2>Friends</h2>
-            <ul style="list-unstyled" v-for="(friend, index) in friends">
-                <li>
-                    <img v-bind:src="friend.picture" style="width: 75px; height: 75px; ">
-                    {{friend.given_name}}
-                    {{friend.family_name}}
-                </li>
-            </ul>
+                   class="form-control input-lg" @blur="updateProfile('family_name')">
+            <textarea name="description" v-model="account.description" placeholder="A personal description"
+                      class="form-control input-lg" @blur="updateProfile('description')"></textarea>
+
         </div>
     </div>
     <nav class="navbar navbar-default navbar-fixed-bottom">
@@ -112,14 +286,20 @@
             <ul class="nav navbar-nav">
                 <li @click="toggleVisibility('Messages')">Messages</li>
                 <li @click="toggleVisibility('Rooms')">Rooms</li>
-                <li @click="toggleVisibility('Friends')">Find Friends</li>
-                <li @click="toggleVisibility('Notifications')">Notifications</li>
+                <li @click="toggleVisibility('Friends')">Friends</li>
+                <li @click="toggleVisibility('Notifications')">Notifications <span class="badge"
+                                                                                   v-show="notificationBadgeCount">{{notificationBadgeCount}}</span>
+                </li>
                 <li @click="toggleVisibility('Profile')">Profile</li>
             </ul>
         </div>
     </nav>
 </div>
 <script type="text/javascript">
+    var pusher = {};
+    Vue.component('modal', {
+        template: '#modal-template'
+    })
     var app = new Vue({
         el: '#app',
         data: {
@@ -128,12 +308,19 @@
             showFriends: false,
             showNotifications: false,
             showProfile: false,
+            choosePictureShow: false,
+            marvelSearchTerms: '',
             selectedRoom: '',
+            selectedImage: '',
+            characters: [],
             messageText: '',
             searchTerms: '',
+            notifications: [],
+            notificationBadgeCount: 0,
             friendSearch: [],
             new_room_name: '',
             rooms: [],
+            bound: [],
             friends: [],
             account: {
                 picture: '/images/default-avatar.jpeg',
@@ -168,6 +355,12 @@
                     case 'Friends':
                         this.loadFriends();
                         break;
+                    case 'Notifications':
+                        this.notificationBadgeCount = 0;
+                        break;
+                    case 'Messages':
+                        this.loadRooms();
+                        break;
                 }
             },
             error: function (error) {
@@ -182,13 +375,33 @@
                     alert(messages);
                 }
             },
-            pushMessage: function() {
+            savePicture: function() {
+                this.choosePictureShow = false;
+                lisdProfile.image = this.selectedImage;
+                this.account['picture'] = this.selectedImage;
+                this.updateProfile('picture');
+            },
+            subscribeToRoom: function (id) {
+                var scopedId = id;
+                var me = this;
+                axios.post('/api/subscribe_room', {
+                    room: id
+                }).then(function (response) {
+                    alert('You have subscribed to: ' + response.data.result.name);
+                    for (var i in me.rooms) {
+                        if (me.rooms[i].id === scopedId) {
+                            me.rooms[i].can_subscribe = false;
+                        }
+                    }
+                });
+            },
+            pushMessage: function () {
                 var payload = {
                     room: this.selectedRoom,
                     message: this.messageText
                 };
                 var me = this;
-                axios.post('/api/push_message', payload).then(function(response) {
+                axios.post('/api/push_message', payload).then(function (response) {
                     me.messageText = '';
                 });
             },
@@ -206,16 +419,30 @@
                     }
                 }).catch(this.error);
             },
+            choosePicture: function () {
+                this.choosePictureShow = true;
+                var me = this;
+                axios.post('/api/characters', {
+                    search: this.marvelSearchTerms
+                }).then(function (response) {
+                    me.characters = response.data.result;
+                });
+            },
             createRoom: function () {
                 var me = this;
                 axios.post('/api/create_room', {
                     name: this.new_room_name
                 }).then(function (response) {
-                    me.rooms.unshift(response.result);
+                    me.rooms.unshift(response.data.result);
                 }).catch(this.error);
             },
-            findRooms: function () {
-
+            findRoom: function () {
+                var me = this;
+                axios.post('/api/find_room', {
+                    search: this.new_room_name
+                }).then(function (response) {
+                    me.rooms = response.data.result;
+                });
             },
             searchFriends: function () {
                 if (!this.searchTerms) {
@@ -227,12 +454,10 @@
                     search: this.searchTerms
                 }).then(function (response) {
                     me.friendSearch = response.data.result;
-                    console.log(response.data.result);
                 });
             },
             loadFriends: function () {
                 var me = this;
-                console.log(lisdProfile);
                 axios.get('/api/friends/' + lisdProfile.id).then(function (response) {
                     me.friendSearch = response.data.result;
                 });
@@ -246,13 +471,14 @@
             loadMessages: function () {
                 var me = this;
                 axios.get('/api/get_messages').then(function (response) {
-                    me.rooms = response.data.result;
+                    me.messages = response.data.result;
                 });
             },
             loadRooms: function () {
                 var me = this;
                 axios.get('/api/get_rooms').then(function (response) {
                     me.rooms = response.data.result;
+                    setTimeout(app.bindMessages, 500);
                 });
             },
             loadProfile: function () {
@@ -261,15 +487,56 @@
                     me.account = response.data.result;
                     me.accountCompare = JSON.stringify(me.account);
                 });
+            },
+            bindMessages: function () {
+                if (pusher.subscribe && app.rooms) {
+                    var channel = pusher.subscribe('messages');
+                    for (var i in app.rooms) {
+                        if (app.bound[app.rooms[i].id]) {
+                            continue;
+                        }
+                        console.log('Binding to ' + app.rooms[i].id);
+                        channel.bind(app.rooms[i].id, app.processMessageNotification);
+                        app.bound[app.rooms[i].id] = true;
+                    }
+                }
+            },
+            processMessageNotification: function (message) {
+                console.log(message);
+                app.messages.unshift(message);
+            },
+            recieveNotification: function (message) {
+                if (!this.showNotifications) {
+                    app.notificationBadgeCount++;
+                }
+                app.notifications.unshift(message);
+            },
+            bindNotifications: function () {
+                if (pusher.subscribe && lisdProfile.id && !lisdProfile.notificationsBound) {
+                    var channel = pusher.subscribe('notifications');
+                    console.log('Binding to ' + lisdProfile.id);
+                    channel.bind(lisdProfile.id, app.recieveNotification);
+                    lisdProfile.notificationsBound = true;
+                }
             }
         }
     });
     axios.get('/api/get_profile').then(function (response) {
         lisdProfile = response.data.result;
+        setTimeout(app.bindNotifications, 500);
     });
     app.loadRooms();
 
     var lisdProfile = {};
+    axios('/api/pusher').then(function (result) {
+        $('body').append(result.data);
+        setTimeout(app.bindMessages, 500);
+        setTimeout(app.bindNotifications, 500);
+
+    });
+    axios('/api/get_messages').then(function (response) {
+        app.messages = response.data.result;
+    });
 
 </script>
 </body>

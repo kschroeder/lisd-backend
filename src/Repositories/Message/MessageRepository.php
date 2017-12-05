@@ -29,6 +29,30 @@ class MessageRepository extends AbstractRepository
         return $result;
     }
 
+    /**
+     * @param Room[] $rooms
+     * @return Message[]
+     */
+
+    public function loadByRooms(array $rooms): ?array
+    {
+        $allRooms = [];
+        foreach ($rooms as $room) {
+            if ($room instanceof Room) {
+                $allRooms[] = $room->getId();
+            }
+        }
+
+        $result = $this->load([
+            'room_id' => [
+                '$in' => $allRooms
+            ]
+        ], [
+            'created_at' => -1
+        ])->toArray();
+        return $result;
+    }
+
     public function getOptions()
     {
         return [

@@ -119,4 +119,14 @@ class Account extends AbstractDocument
         $this['data_array'] = $data;
     }
 
+    public function getDescription()
+    {
+        return $this['description'];
+    }
+
+    public function setDescription($description)
+    {
+        $this['description'] = $description;
+    }
+
 }

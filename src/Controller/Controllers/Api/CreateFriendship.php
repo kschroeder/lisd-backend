@@ -4,15 +4,11 @@ namespace Lisd\Controller\Controllers\Api;
 
 use Lisd\Controller\AbstractController;
 use Lisd\Controller\Auth\AuthorizationInterface;
-use Lisd\Controller\Controllers\Api\InputFilter\Message;
 use Lisd\Controller\RequestToJson;
 use Lisd\Processing\Manager\ProcessManager;
 use Lisd\Processing\Processor\FriendshipNotification;
-use Lisd\Processing\Processor\MessageNotifications;
 use Lisd\Repositories\Friendship\Friendship;
 use Lisd\Repositories\Friendship\FriendshipRepository;
-use Lisd\Repositories\Message\MessageRepository;
-use Lisd\Repositories\Room\RoomRepository;
 use Lisd\View\Responses\FailedApiResponse;
 use Lisd\View\Responses\SuccessfulApiResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -53,6 +49,7 @@ class CreateFriendship extends AbstractController
 
             $friendship = new Friendship();
             $friendship->setFriends($this->authorization->getAccount(), $this->createFriendshipFilter->getAccount());
+            $friendship->setInitiator($this->authorization->getAccount());
             $objectId = $this->friendshipRepository->save($friendship)->getInsertedId();
             $friendship = $this->friendshipRepository->loadById($objectId);
             $this->processManager->queue(

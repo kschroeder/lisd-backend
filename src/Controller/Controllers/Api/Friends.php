@@ -2,21 +2,12 @@
 
 namespace Lisd\Controller\Controllers\Api;
 
-use Lisd\Controller\AbstractController;
 use Lisd\Controller\AbstractUnauthenticatedController;
-use Lisd\Controller\Auth\AuthorizationInterface;
 use Lisd\Controller\Context;
-use Lisd\Controller\Controllers\Api\InputFilter\Message;
-use Lisd\Controller\RequestToJson;
-use Lisd\Processing\Manager\ProcessManager;
-use Lisd\Processing\Processor\FriendshipNotification;
-use Lisd\Processing\Processor\MessageNotifications;
 use Lisd\Repositories\Account\Account;
 use Lisd\Repositories\Account\AccountRepository;
 use Lisd\Repositories\Friendship\Friendship;
 use Lisd\Repositories\Friendship\FriendshipRepository;
-use Lisd\Repositories\Message\MessageRepository;
-use Lisd\Repositories\Room\RoomRepository;
 use Lisd\View\Responses\FailedApiResponse;
 use Lisd\View\Responses\SuccessfulApiResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -61,8 +52,9 @@ class Friends extends AbstractUnauthenticatedController
                 /** @var $friendAccount Account  */
                 $results[] = [
                     'id' => $friendAccount->getId(),
-                    'first_name' => $friendAccount->getGivenName(),
-                    'last_name' => $friendAccount->getFamilyName(),
+                    'given_name' => $friendAccount->getGivenName(),
+                    'family_name' => $friendAccount->getFamilyName(),
+                    'description' => $friendAccount->getDescription(),
                     'picture' => $friendAccount->getPicture()
                 ];
             }
