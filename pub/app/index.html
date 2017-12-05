@@ -6,6 +6,8 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.9/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.17.1/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"/>
     <style>
         .navbar-collapse {
             padding: 0;
@@ -27,6 +29,10 @@
             text-align: center;
             float: none;
         }
+
+        #profile-form .form-control {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -39,21 +45,74 @@
 <div class="container" id="app" style="margin-top: 200px">
     <div id="messages" v-if="showMessages">
         <h1>Messages</h1>
+        <form class="form form-inline" onsubmit="return false">
+            <select v-for="(room, index) in rooms" class="form-control input-lg" v-model="selectedRoom">
+                <option v-bind:value="room.id">{{room.name}}</option>
+            </select>
+            <input type="text" class="form-control input-lg" style="width: 60%; " placeholder="Type a message..." v-model:value="messageText">
+            <button class="btn btn-primary btn-lg" @click="pushMessage()">Send Message</button>
+        </form>
+    </div>
+    <div id="rooms" v-if="showRooms">
+        <h1>Rooms</h1>
+        <form class="form form-inline" onsubmit="return false">
+            <input type="text" name="new_room_name" v-model:value="new_room_name" class="form-control"
+                   placeholder="Enter the name of the room...">
+            <button class="btn btn-primary" @click="findRoom()">Find and Join Room</button>
+            <button class="btn btn-default" @click="createRoom()">Create Room</button>
+        </form>
+        <ul style="list-unstyled" v-for="(room, index) in rooms">
+            <li>
+                {{room.name}}
+            </li>
+        </ul>
     </div>
     <div id="friends" v-if="showFriends">
         <h1>Friends</h1>
+        <form onsubmit="return false" class="form form-inline">
+            <input type="text" name="find_friend" class="form-control" placeholder="Search for a friend..."
+                   v-model:value="searchTerms">
+            <button class="btn btn-primary" @click="searchFriends()">Search</button>
+        </form>
+        <ul style="list-unstyled" v-for="(friend, index) in friendSearch">
+            <li>
+                <img v-bind:src="friend.picture" style="width: 75px; height: 75px; ">
+                {{friend.given_name}}
+                {{friend.family_name}}
+                <i class="fa fa-plus" aria-hidden="true" v-if="friend.can_create_friendship"
+                   @click="createFriendship(friend.id)"></i>
+            </li>
+        </ul>
     </div>
     <div id="notifications" v-if="showNotifications">
         <h1>Notifications</h1>
     </div>
     <div id="profile" v-if="showProfile">
         <h1>Profile</h1>
+        <img v-bind:src="account.picture"
+             style="width:200px; height:200px; border-radius: 5px; border: 1px solid #666666; box-shadow: #403c3d 2px 2px 3px"
+             class="pull-left">
+        <div class="pull-left" style="padding-left: 30px; " id="profile-form">
+            <input type="text" name="given_name" v-model:value="account.given_name" placeholder="First Name"
+                   class="form-control" @blur="updateProfile('given_name')">
+            <input type="text" name="given_name" v-model:value="account.family_name" placeholder="Family Name"
+                   class="form-control" @blur="updateProfile('family_name')">
+            <h2>Friends</h2>
+            <ul style="list-unstyled" v-for="(friend, index) in friends">
+                <li>
+                    <img v-bind:src="friend.picture" style="width: 75px; height: 75px; ">
+                    {{friend.given_name}}
+                    {{friend.family_name}}
+                </li>
+            </ul>
+        </div>
     </div>
     <nav class="navbar navbar-default navbar-fixed-bottom">
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li @click="toggleVisibility('Messages')">Messages</li>
-                <li @click="toggleVisibility('Friends')">Friends</li>
+                <li @click="toggleVisibility('Rooms')">Rooms</li>
+                <li @click="toggleVisibility('Friends')">Find Friends</li>
                 <li @click="toggleVisibility('Notifications')">Notifications</li>
                 <li @click="toggleVisibility('Profile')">Profile</li>
             </ul>
@@ -61,25 +120,156 @@
     </nav>
 </div>
 <script type="text/javascript">
-    new Vue({
+    var app = new Vue({
         el: '#app',
         data: {
             showMessages: true,
+            showRooms: false,
             showFriends: false,
             showNotifications: false,
             showProfile: false,
+            selectedRoom: '',
+            messageText: '',
+            searchTerms: '',
+            friendSearch: [],
+            new_room_name: '',
+            rooms: [],
+            friends: [],
+            account: {
+                picture: '/images/default-avatar.jpeg',
+                given_name: '',
+                family_name: ''
+            },
+            accountCompare: '',
             messages: []
+        },
+        watch: {
+            searchTerms: function (newValue) {
+                if (!newValue) {
+                    this.loadFriends();
+                }
+            }
         },
         methods: {
             toggleVisibility: function (which) {
                 this.showMessages = false;
                 this.showFriends = false;
+                this.showRooms = false;
                 this.showNotifications = false;
                 this.showProfile = false;
                 this['show' + which] = true;
+                switch (which) {
+                    case 'Profile':
+                        this.loadProfile();
+                        break;
+                    case 'Rooms':
+                        this.loadRooms();
+                        break;
+                    case 'Friends':
+                        this.loadFriends();
+                        break;
+                }
+            },
+            error: function (error) {
+                var messages = [];
+
+                for (var i in error.response.data.message) {
+                    for (var m in error.response.data.message[i]) {
+                        messages.push(error.response.data.message[i][m]);
+                    }
+                }
+                if (messages) {
+                    alert(messages);
+                }
+            },
+            pushMessage: function() {
+                var payload = {
+                    room: this.selectedRoom,
+                    message: this.messageText
+                };
+                var me = this;
+                axios.post('/api/push_message', payload).then(function(response) {
+                    me.messageText = '';
+                });
+            },
+            createFriendship: function (id) {
+                var me = this;
+                var scopedId = id;
+                axios.post('/api/create_friendship', {
+                    account: id
+                }).then(function (response) {
+                    alert('You are now friends');
+                    for (var i in me.friendSearch) {
+                        if (me.friendSearch[i]['id'] === scopedId) {
+                            me.friendSearch.splice(i, 1);
+                        }
+                    }
+                }).catch(this.error);
+            },
+            createRoom: function () {
+                var me = this;
+                axios.post('/api/create_room', {
+                    name: this.new_room_name
+                }).then(function (response) {
+                    me.rooms.unshift(response.result);
+                }).catch(this.error);
+            },
+            findRooms: function () {
+
+            },
+            searchFriends: function () {
+                if (!this.searchTerms) {
+                    this.loadFriends();
+                    return;
+                }
+                var me = this;
+                axios.post('/api/find_friend', {
+                    search: this.searchTerms
+                }).then(function (response) {
+                    me.friendSearch = response.data.result;
+                    console.log(response.data.result);
+                });
+            },
+            loadFriends: function () {
+                var me = this;
+                console.log(lisdProfile);
+                axios.get('/api/friends/' + lisdProfile.id).then(function (response) {
+                    me.friendSearch = response.data.result;
+                });
+            },
+            updateProfile: function (attribute) {
+                axios.post('/api/update_profile_attribute', {
+                    attribute: attribute,
+                    value: this.account[attribute]
+                });
+            },
+            loadMessages: function () {
+                var me = this;
+                axios.get('/api/get_messages').then(function (response) {
+                    me.rooms = response.data.result;
+                });
+            },
+            loadRooms: function () {
+                var me = this;
+                axios.get('/api/get_rooms').then(function (response) {
+                    me.rooms = response.data.result;
+                });
+            },
+            loadProfile: function () {
+                var me = this;
+                axios.get('/api/get_profile').then(function (response) {
+                    me.account = response.data.result;
+                    me.accountCompare = JSON.stringify(me.account);
+                });
             }
         }
-    })
+    });
+    axios.get('/api/get_profile').then(function (response) {
+        lisdProfile = response.data.result;
+    });
+    app.loadRooms();
+
+    var lisdProfile = {};
 
 </script>
 </body>

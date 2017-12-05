@@ -19,6 +19,13 @@ class AccountRepository extends AbstractRepository
         ])->toArray();
         return array_shift($result);
     }
+    public function loadBySub($sub): ?Account
+    {
+        $result = $this->load([
+            'sub' => $sub
+        ])->toArray();
+        return array_shift($result);
+    }
 
     public function getOptions()
     {

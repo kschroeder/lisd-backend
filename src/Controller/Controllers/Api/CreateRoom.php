@@ -39,6 +39,7 @@ class CreateRoom extends AbstractController
     public function execute(): ResponseInterface
     {
         $request = $this->jsonRequest->json();
+        $this->createRoomFilter->init();
         $this->createRoomFilter->setData($request);
         if ($this->createRoomFilter->isValid()) {
             $room = new Room();

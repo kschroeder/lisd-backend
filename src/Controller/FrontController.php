@@ -54,7 +54,7 @@ class FrontController
             $controller = $match->getParam('controller');
             $action = $match->getParam('action');
             foreach ($match->getParams() as $key => $value) {
-                $context[$key] = $value;
+                $this->context[$key] = $value;
             }
         }
 

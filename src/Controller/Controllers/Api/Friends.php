@@ -48,25 +48,25 @@ class Friends extends AbstractUnauthenticatedController
             $accounts = [];
             foreach ($friends as $friend) {
                 /** @var $friend Friendship */
-                $accounts[] = array_diff($friend->getFriendship(), [$accountId]);
+                $result = array_diff($friend->getFriendship(), [$accountId]);
+                $accounts[] = array_shift($result);
             }
             $results = [];
             $friendAccounts = $this->accountRepository->load([
                 '_id' => [
                     '$in' => $accounts
                 ]
-            ]);
+            ])->toArray();
             foreach ($friendAccounts as $friendAccount) {
                 /** @var $friendAccount Account  */
                 $results[] = [
+                    'id' => $friendAccount->getId(),
                     'first_name' => $friendAccount->getGivenName(),
                     'last_name' => $friendAccount->getFamilyName(),
                     'picture' => $friendAccount->getPicture()
                 ];
             }
-            return (new SuccessfulApiResponse())->getResponse([
-                'friends' => $results
-            ]);
+            return (new SuccessfulApiResponse())->getResponse($results);
         }
         return (new FailedApiResponse())->getResponse(['account' => ['notExists' => 'Account does not exist']]);
     }

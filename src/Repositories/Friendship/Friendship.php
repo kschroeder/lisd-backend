@@ -18,7 +18,7 @@ class Friendship extends AbstractDocument
 
     public function getFriendship(): array
     {
-        return $this['friendship'];
+        return (array)$this['friendship'];
     }
 
 }

@@ -21,7 +21,7 @@ class CreateRoom extends InputFilter
     public function init()
     {
         $this->add([
-            'name' => 'message',
+            'name' => 'name',
             'required' => true,
             'validators' => [
                 [
@@ -30,13 +30,7 @@ class CreateRoom extends InputFilter
                         'min' => 3,
                         'max' => 255
                     ]
-                ]
-            ]
-        ]);
-        $this->add([
-            'name' => 'room',
-            'required' => true,
-            'validators' => [
+                ],
                 $this->roomNotExists
             ]
         ]);

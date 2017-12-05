@@ -42,6 +42,22 @@ class Account extends AbstractDocument
     /**
      * @return mixed
      */
+    public function getNickname()
+    {
+        return $this['nickname'];
+    }
+
+    /**
+     * @param mixed $nicname
+     */
+    public function setNickname($name)
+    {
+        $this['nickname'] = $name;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getFamilyName()
     {
         return $this['family_name'];

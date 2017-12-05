@@ -13,12 +13,33 @@ class FriendshipRepository extends AbstractRepository
         return 'friendships';
     }
 
+    public function exists(Account $account1, Account $account2)
+    {
+        $pipeline = [
+            [
+                '$match' => [
+                    'friendship' => $account1->getId()
+                ]
+            ],
+            [
+                '$match' => [
+                    'friendship' => $account2->getId()
+                ]
+            ],
+
+        ];
+
+        $result = $this->getCollection()->aggregate($pipeline)->toArray();
+
+        return count($result) > 0;
+    }
+
     public function loadByAccount(Account $account)
     {
         $result = $this->load([
             'friendship' => $account->getId()
         ])->toArray();
-        return array_shift($result);
+        return $result;
     }
 
     public function getOptions()

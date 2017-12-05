@@ -3,6 +3,7 @@
 namespace Lisd\Repositories\Room;
 
 use Lisd\Repositories\AbstractRepository;
+use Lisd\Repositories\Account\Account;
 use MongoDB\Model\BSONArray;
 
 class RoomRepository extends AbstractRepository
@@ -18,6 +19,19 @@ class RoomRepository extends AbstractRepository
             'name' => $name
         ])->toArray();
         return array_shift($result);
+    }
+
+    /**
+     * @param Account $account
+     * @return Room[]
+     */
+
+    public function loadByAccount(Account $account): array
+    {
+        $result = $this->load([
+            'owner_id' => $account->getId()
+        ])->toArray();
+        return $result;
     }
 
     public function getOptions()

@@ -12,7 +12,9 @@ class Session implements AuthorizationInterface
 
     public function authorize(RequestInterface $request): bool
     {
-        session_start();
+        if (!session_id()) {
+            session_start();
+        }
         $this->account = $_SESSION['account'] ?? null;
         return $this->account instanceof Account;
     }

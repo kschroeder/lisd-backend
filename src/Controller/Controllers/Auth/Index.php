@@ -38,7 +38,7 @@ class Index extends AbstractUnauthenticatedController
         $result = $this->auth0->getUser();
 
         if (isset($result['sub'])) {
-            $account = $this->repository->loadByUserId($result['sub']);
+            $account = $this->repository->loadBySub($result['sub']);
             if (!$account) {
                 $account = new Account($result);
                 $result = $this->repository->save($account)->getInsertedId();

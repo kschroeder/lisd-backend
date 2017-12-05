@@ -5,6 +5,7 @@ namespace Lisd\Controller\Controllers\Api;
 use Lisd\Controller\AbstractController;
 use Lisd\Controller\Auth\AuthorizationInterface;
 use Lisd\Controller\Controllers\Api\InputFilter\Message;
+use Lisd\Controller\Controllers\Api\Validator\RoomExists;
 use Lisd\Controller\RequestToJson;
 use Lisd\Processing\Manager\ProcessManager;
 use Lisd\Processing\Processor\MessageNotifications;
@@ -21,7 +22,7 @@ class PushMessage extends AbstractController
     private $messageFilter;
     private $messageNotifications;
     private $processManager;
-    private $roomRepository;
+    private $roomExists;
     private $messageRepository;
     private $authorization;
 
@@ -30,7 +31,7 @@ class PushMessage extends AbstractController
         Message $messageFilter,
         MessageNotifications $messageNotifications,
         ProcessManager $processManager,
-        RoomRepository $roomRepository,
+        RoomExists $roomExists,
         MessageRepository $messageRepository,
         AuthorizationInterface $authorization
     )
@@ -39,7 +40,7 @@ class PushMessage extends AbstractController
         $this->messageFilter = $messageFilter;
         $this->messageNotifications = $messageNotifications;
         $this->processManager = $processManager;
-        $this->roomRepository = $roomRepository;
+        $this->roomExists = $roomExists;
         $this->messageRepository = $messageRepository;
         $this->authorization = $authorization;
     }
@@ -47,11 +48,12 @@ class PushMessage extends AbstractController
     public function execute(): ResponseInterface
     {
         $message = $this->jsonRequest->json();
+        $this->messageFilter->init();
         $this->messageFilter->setData($message);
         if ($this->messageFilter->isValid()) {
             $message = new \Lisd\Repositories\Message\Message();
-            $message->setText($this->messageFilter->getValue('text'));
-            $message->setRoom($this->roomRepository->loadById($this->messageFilter->getValue('room')));
+            $message->setText($this->messageFilter->getValue('message'));
+            $message->setRoom($this->roomExists->getRoom());
             $message->setAccount($this->authorization->getAccount());
             $objectId = $this->messageRepository->save($message)->getInsertedId();
             $message = $this->messageRepository->loadById($objectId);

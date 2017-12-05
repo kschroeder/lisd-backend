@@ -22,8 +22,12 @@ class GetProfile extends AbstractController
 
     public function execute(): ResponseInterface
     {
+        $account = $this->authorization->getAccount();
         $result = [
-
+            'id' => (string)$account->getId(),
+            'given_name' => $account->getGivenName(),
+            'family_name' => $account->getFamilyName(),
+            'picture' => $account->getPicture(),
         ];
         return (new SuccessfulApiResponse())->getResponse($result);
     }

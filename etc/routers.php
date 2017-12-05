@@ -14,7 +14,7 @@ return [
             ],
         ],
         'friends' => [
-            'type' => \Zend\Router\Http\Literal::class,
+            'type' => \Zend\Router\Http\Segment::class,
             'options' => [
                 'route' => '/api/friends/:accountId',
                 'defaults' => [
@@ -26,7 +26,7 @@ return [
         'api' => [
             'type' => \Zend\Router\Http\Segment::class,
             'options' => [
-                'route' => '/api',
+                'route' => '/api[/:action]',
                 'defaults' => [
                     'controller' => 'Api',
                     'action' => 'index',

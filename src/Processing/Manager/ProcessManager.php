@@ -27,7 +27,7 @@ class ProcessManager
     {
         $this->logger = $logger;
         $this->di = $di;
-        $this->sqs = $awsFactory->factory(SqsClient::class);
+//        $this->sqs = $awsFactory->factory(SqsClient::class);
     }
 
     public function execute(array $payload)

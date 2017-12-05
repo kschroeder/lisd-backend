@@ -47,18 +47,20 @@ class CreateFriendship extends AbstractController
     public function execute(): ResponseInterface
     {
         $message = $this->jsonRequest->json();
+        $this->createFriendshipFilter->init();
         $this->createFriendshipFilter->setData($message);
         if ($this->createFriendshipFilter->isValid()) {
+
             $friendship = new Friendship();
             $friendship->setFriends($this->authorization->getAccount(), $this->createFriendshipFilter->getAccount());
-            $objectId = $this->friendshipRepository->save($message)->getInsertedId();
+            $objectId = $this->friendshipRepository->save($friendship)->getInsertedId();
             $friendship = $this->friendshipRepository->loadById($objectId);
             $this->processManager->queue(
                 $this->friendshipNotifications->setTarget($friendship)
             );
             return (new SuccessfulApiResponse())->getResponse([
                 'id' => (string)$friendship->getId(),
-                'created_at' => $message->getCreatedAt()->toDateTime()->getTimestamp()
+                'created_at' => $friendship->getCreatedAt()->toDateTime()->getTimestamp()
             ]);
         }
         return (new FailedApiResponse())->getResponse($this->createFriendshipFilter->getMessages());

@@ -15,6 +15,12 @@ class RoomNotExists extends AbstractValidator
         $this->roomRepository = $roomRepository;
     }
 
+    public function getMessages()
+    {
+        return [
+            'roomNotExists' => 'A room with that name currently exists'
+        ];
+    }
 
     public function isValid($value)
     {
