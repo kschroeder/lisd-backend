@@ -10,4 +10,9 @@
             <element identifier="secret" />
         </group>
     </section>
+    <section identifier="google">
+        <group identifier="analytics">
+            <element identifier="tracking_id"/>
+        </group>
+    </section>
 </magiumConfiguration>

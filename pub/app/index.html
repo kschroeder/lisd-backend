@@ -348,18 +348,23 @@
                 switch (which) {
                     case 'Profile':
                         this.loadProfile();
+                        gtag('config', gaTrackingId, {'page_path': '/profile'});
                         break;
                     case 'Rooms':
                         this.loadRooms();
+                        gtag('config', gaTrackingId, {'page_path': '/rooms'});
                         break;
                     case 'Friends':
                         this.loadFriends();
+                        gtag('config', gaTrackingId, {'page_path': '/friends'});
                         break;
                     case 'Notifications':
                         this.notificationBadgeCount = 0;
+                        gtag('config', gaTrackingId, {'page_path': '/notifications'});
                         break;
                     case 'Messages':
                         this.loadRooms();
+                        gtag('config', gaTrackingId, {'page_path': '/messages'});
                         break;
                 }
             },
@@ -521,6 +526,11 @@
             }
         }
     });
+
+    axios.get('/api/analytics').then(function (response) {
+       $('body').append(response.data);
+    });
+
     axios.get('/api/get_profile').then(function (response) {
         lisdProfile = response.data.result;
         setTimeout(app.bindNotifications, 500);
@@ -539,5 +549,6 @@
     });
 
 </script>
+
 </body>
 </html>
