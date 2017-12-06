@@ -1,0 +1,16 @@
+FROM centos:latest
+
+RUN yum -y install epel-release
+
+RUN yum -y install nginx yum-utils http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && yum-config-manager --enable remi-php71
+
+RUN yum -y install php-fpm php-pdo php-fpm php-mysqlnd php-opcache php-xml php-json php-cli php-zip php-pecl-mongodb && php -r "copy('https://getcomposer.org/installer', '/tmp/composer-setup.php');" && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+RUN sed -e 's/;clear_env = no/clear_env = no/' -i /etc/php-fpm.d/www.conf
+COPY nginx/entrypoint.sh /
+COPY nginx/site.conf /etc/nginx/conf.d
+COPY nginx/nginx.conf /etc/nginx/
+COPY . /var/www
+
+RUN cd /var/www && composer update
+
+ENTRYPOINT /entrypoint.sh
